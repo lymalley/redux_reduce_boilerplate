@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr-FR">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="referrer" content="no-referrer">
+    <title>Redux - reduce boilerplate</title>
+    <style>
+        pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+        .string { color: green; }
+        .number { color: darkorange; }
+        .boolean { color: blue; }
+        .null { color: magenta; }
+        .key { color: red; }
+    </style>
+<body>
+<pre id="state"></pre>
+<button id="dispatchAction">Go!</button>
+<script src="https://unpkg.com/redux@4.0.0/dist/redux.min.js"></script>
+<script>
+    const createStore = window.Redux.createStore;
+    const applyMiddleware = window.Redux.applyMiddleware;
+
+    // fake db fetch
+    const delay = (ms) =>
+        new Promise(resolve => setTimeout(resolve, ms));
+
+    const apiFetchCars = () =>
+    delay(1000).then(() => {
+        return ['PEUGEOT', 'TOYOTA', 'MINI', 'FORD', 'BORGWARD', 'RENAULT', 'BUGGY', 'MERCEDES', 'MITSUBISHY', 'CHEVROLET', 'OPEL'];
+    });
+
+    // thunk is available as a npm package
+    const thunk = store => next => action =>
+    {
+        return typeof action === 'function'
+            ? action(store.dispatch, store.getState)
+            : next(action);
+    };
+
+
+
+
+
+
+    const initialState = {
+        cars: [],
+    };
+
+    const reducer = (state = initialState, action) => {
+        switch(action.type){
+            case 'FETCH_CARS':
+                return {
+                    ...state,
+                    cars: action.cars,
+                };
+            default:
+                return state;
+        }
+    };
+
+    const requestCars = (cars) => ({
+        type: 'FETCH_CARS',
+        cars,
+    });
+
+    const fetchCars = () => (dispatch, getState) => {
+        return apiFetchCars().then(response =>
+            dispatch(requestCars(response))
+        );
+    };
+
+    const store = createStore(reducer, applyMiddleware(thunk));
+
+    document.getElementById('dispatchAction').addEventListener('click', () => {
+        store.dispatch(fetchCars());
+    });
+</script>
+<script>
+    function syntaxHighlight(json) {
+        if (typeof json !== 'string') {
+            json = JSON.stringify(json, undefined, 2);
+        }
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            let cls = 'number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'key';
+                } else {
+                    cls = 'string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'boolean';
+            } else if (/null/.test(match)) {
+                cls = 'null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+    const idElem = document.getElementById('state');
+    setInterval(() => {
+        idElem.innerHTML = syntaxHighlight(store.getState(), null, 2);
+    }, 300);
+</script>
+</body>
+</html>

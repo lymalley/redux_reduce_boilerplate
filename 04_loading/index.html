@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr-FR">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="referrer" content="no-referrer">
+    <title>Redux - reduce boilerplate</title>
+    <style>
+        pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+        .string { color: green; }
+        .number { color: darkorange; }
+        .boolean { color: blue; }
+        .null { color: magenta; }
+        .key { color: red; }
+    </style>
+<body>
+<pre id="state"></pre>
+<button id="dispatchAction">Go!</button>
+<script src="https://unpkg.com/redux@4.0.0/dist/redux.min.js"></script>
+<script src="../utils.js"></script>
+<script>
+    const createStore = window.Redux.createStore;
+    const applyMiddleware = window.Redux.applyMiddleware;
+
+    const initialState = {
+        cars: {
+            data: [],
+            loading: false,
+        },
+    };
+
+    const reducer = (state = initialState, action) => {
+        switch(action.type){
+            case 'FETCH_CARS_REQUEST':
+                return {
+                    ...state,
+                    cars: {
+                        ...state.cars,
+                        loading: true,
+                    }
+                };
+            case 'FETCH_CARS_COMPLETE':
+                return {
+                    ...state,
+                    cars: {
+                        data: action.cars,
+                        loading: false,
+                    },
+                };
+            default:
+                return state;
+        }
+    };
+
+    const fetchCarsRequest = () => ({
+        type: 'FETCH_CARS_REQUEST'
+    });
+    const fetchCarsComplete = (cars) => ({
+        type: 'FETCH_CARS_COMPLETE',
+        cars,
+    });
+
+    const fetchCars = () => (dispatch, getState) => {
+        dispatch(fetchCarsRequest());
+        return apiFetchCars().then(response =>
+            dispatch(fetchCarsComplete(response))
+        );
+    };
+
+    const store = createStore(reducer, applyMiddleware(thunk));
+
+    document.getElementById('dispatchAction').addEventListener('click', () => {
+        store.dispatch(fetchCars());
+    });
+</script>
+<script>
+    const idElem = document.getElementById('state');
+    setInterval(() => {
+        idElem.innerHTML = syntaxHighlight(store.getState(), null, 2);
+    }, 300);
+</script>
+</body>
+</html>

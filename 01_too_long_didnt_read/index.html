@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr-FR">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="referrer" content="no-referrer">
+    <title>Redux - reduce boilerplate</title>
+    <style>
+        pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+        .string { color: green; }
+        .number { color: darkorange; }
+        .boolean { color: blue; }
+        .null { color: magenta; }
+        .key { color: red; }
+    </style>
+<body>
+<pre id="state"></pre>
+<script src="https://unpkg.com/redux@4.0.0/dist/redux.min.js"></script>
+<script>
+    // from https://gist.github.com/iturgeon/d66b9431565a1400614006dc682111f8
+    const createStore = window.Redux.createStore;
+    // == An initial state ==
+    // Represents the initial state of the store
+    // sent as the `state` argument for `reducer` the first time it's called (via use of es6 default values)
+    let initialState = {
+        currentAction: 'Chilling',
+        otherVar: false
+    }
+
+    // == A Redux Reducer ==
+    // Args are the current state, an action
+    // Returns the new state
+    // Redux demands these be pure fucntions - they'll always return the same result given the same arguments
+    // MUST NOT:
+    // mutate it's arguments (if state arg is an object, don't change it in place, create a new object)
+    // perform side effects (api calls, etc)
+    // call functions that return data that changes 'non-pure' like Date.now() or Math.random()
+    let reducer = (state = initialState, action) => {
+        switch(action.type){
+            case 'AN_ACTION':
+                return Object.assign({}, state, { currentAction: action.data, otherVar: true })
+            default:
+                return state
+        }
+    }
+
+    // == An Action ==
+    // Used to create an object that is fed to the reducer
+    // Called by anything, anywhere inside your app
+    let anAction = (input) => ({
+        type: 'AN_ACTION',
+        data: input
+    })
+
+    // == A Data Store ==
+    // Store holds the state and manages flowing actions through the reducer
+    // Args are a reducer (and optionally an initial state from, say an api or db)
+    let store = createStore(reducer)
+
+    // Note the reducer has been called already
+    console.log(store.getState()) // { currentAction: 'Chilling', otherVar: false }
+
+    // == Dispatch an Action ==
+    // This is how your application changes the state
+    store.dispatch(anAction('redux!'))
+
+    // `anAction()` created an object, `dispatch()` fed it to `reducer`, and the state changed
+    console.log(store.getState()) // { currentAction: 'redux!', otherVar: true }
+</script>
+<script>
+    function syntaxHighlight(json) {
+        if (typeof json !== 'string') {
+            json = JSON.stringify(json, undefined, 2);
+        }
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            let cls = 'number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'key';
+                } else {
+                    cls = 'string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'boolean';
+            } else if (/null/.test(match)) {
+                cls = 'null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+    const idElem = document.getElementById('state');
+    setInterval(() => {
+        idElem.innerHTML = syntaxHighlight(store.getState(), null, 2);
+    }, 300);
+</script>
+</body>
+</html>
